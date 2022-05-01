@@ -57,3 +57,34 @@ func TestAddUsers(t *testing.T) {
 
 	casdoor.AddUsersInBatch(users)
 }
+
+func TestAddUcenterUsers(t *testing.T) {
+	object.InitConfig()
+	InitAdapter()
+	object.InitAdapter()
+	casdoor.InitCasdoorAdapter()
+	controllers.InitAuthConfig()
+
+	membersEx := getUcenterMembersEx()
+
+	var wg sync.WaitGroup
+	wg.Add(len(membersEx))
+
+	sem := make(chan int, AddUsersConcurrency)
+	users := []*auth.User{}
+	for i, memberEx := range membersEx {
+		sem <- 1
+		go func(i int, memberEx *MemberEx) {
+			defer wg.Done()
+
+			user := getUserFromUcenterMember(memberEx)
+			users = append(users, user)
+			fmt.Printf("[%d/%d]: Added user: [%d, %s]\n", i+1, len(membersEx), memberEx.Member.Uid, memberEx.Member.Username)
+			<-sem
+		}(i, memberEx)
+	}
+
+	wg.Wait()
+
+	casdoor.AddUsersInBatch(users)
+}
