@@ -181,7 +181,7 @@ func getUserFromUcenterMember(memberEx *MemberEx) *auth.User {
 	}
 
 	if memberEx.Profile == nil {
-		fmt.Printf("[%d, %s] memberEx.Profile == nil\n", memberEx.Member.Uid, memberEx.Member.Username)
+		fmt.Printf("[%d, %s] memberEx.Profile == nil\n", memberEx.UcenterMember.Uid, memberEx.UcenterMember.Username)
 	} else {
 		displayName := memberEx.Profile.Realname
 		if displayName == "" {
