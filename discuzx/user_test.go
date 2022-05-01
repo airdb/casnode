@@ -25,7 +25,7 @@ import (
 	"github.com/casdoor/casdoor-go-sdk/auth"
 )
 
-var AddUsersConcurrency = 20
+var AddUsersConcurrency = 200
 
 func TestAddUsers(t *testing.T) {
 	object.InitConfig()
@@ -76,10 +76,9 @@ func TestAddUcenterUsers(t *testing.T) {
 		sem <- 1
 		go func(i int, memberEx *MemberEx) {
 			defer wg.Done()
-
 			user := getUserFromUcenterMember(memberEx)
 			users = append(users, user)
-			fmt.Printf("[%d/%d]: Added user: [%d, %s]\n", i+1, len(membersEx), memberEx.Member.Uid, memberEx.Member.Username)
+			fmt.Printf("[%d/%d]: Added user: [%d, %s]\n", i+1, len(membersEx), memberEx.UcenterMember.Uid, memberEx.UcenterMember.Username)
 			<-sem
 		}(i, memberEx)
 	}
