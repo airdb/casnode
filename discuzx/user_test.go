@@ -16,6 +16,7 @@ package discuzx
 
 import (
 	"fmt"
+	"log"
 	"sync"
 	"testing"
 
@@ -23,9 +24,10 @@ import (
 	"github.com/casbin/casnode/controllers"
 	"github.com/casbin/casnode/object"
 	"github.com/casdoor/casdoor-go-sdk/auth"
+	"github.com/go-sql-driver/mysql"
 )
 
-var AddUsersConcurrency = 200
+var AddUsersConcurrency = 20
 
 func TestAddUsers(t *testing.T) {
 	object.InitConfig()
@@ -85,5 +87,64 @@ func TestAddUcenterUsers(t *testing.T) {
 
 	wg.Wait()
 
-	casdoor.AddUsersInBatch(users)
+	addUsersInBatchWithPanic(users)
+}
+
+func addUsersInBatchWithPanic(users []*auth.User) bool {
+	batchSize := 1000
+
+	if len(users) == 0 {
+		return false
+	}
+
+	affected := false
+	for i := 0; i < (len(users)-1)/batchSize+1; i++ {
+		start := i * batchSize
+		end := (i + 1) * batchSize
+		if end > len(users) {
+			end = len(users)
+		}
+
+		tmp := users[start:end]
+		fmt.Printf("Add users: [%d - %d].\n", start, end)
+		if addUsersWitPanic(tmp) {
+			affected = true
+		}
+	}
+
+	return affected
+}
+
+func addUsersWitPanic(users []*auth.User) bool {
+	defer func() {
+		err := recover()
+		if err == nil {
+			return
+		}
+		if err, ok := err.(*mysql.MySQLError); ok && err.Number == 1062 {
+			for i := 0; i < len(users); i++ {
+				addUserWitPanic(users[i])
+			}
+		} else {
+			log.Fatal(err)
+		}
+	}()
+
+	return casdoor.AddUsers(users)
+}
+
+func addUserWitPanic(user *auth.User) bool {
+	defer func() {
+		err := recover()
+		if err == nil {
+			return
+		}
+		if err, ok := err.(*mysql.MySQLError); ok && err.Number == 1062 {
+			log.Println(err)
+		} else {
+			log.Fatal(err)
+		}
+	}()
+
+	return casdoor.AddUser(user)
 }
