@@ -57,3 +57,30 @@ func getMemberExMap() map[int]*MemberEx {
 	}
 	return m
 }
+
+func getUcenterMembersEx() []*MemberEx {
+	memberMap := getMemberMap()
+	profileMap := getProfileMap()
+	ucenterMemberMap := getUcenterMemberMap()
+
+	membersEx := []*MemberEx{}
+	for _, ucenterMember := range ucenterMemberMap {
+		memberEx := &MemberEx{
+			Member: func() *Member {
+				if member, ok := memberMap[ucenterMember.Uid]; ok {
+					return member
+				}
+				return nil
+			}(),
+			Profile: func() *Profile {
+				if profile, ok := profileMap[ucenterMember.Uid]; ok {
+					return profile
+				}
+				return nil
+			}(),
+			UcenterMember: ucenterMember,
+		}
+		membersEx = append(membersEx, memberEx)
+	}
+	return membersEx
+}

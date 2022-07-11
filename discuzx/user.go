@@ -130,3 +130,111 @@ func getUserFromMember(memberEx *MemberEx) *auth.User {
 
 	return user
 }
+
+func getUserFromUcenterMember(memberEx *MemberEx) *auth.User {
+	user := &auth.User{
+		Owner:        CasdoorOrganization,
+		Name:         memberEx.UcenterMember.Username,
+		CreatedTime:  getTimeFromUnixSeconds(memberEx.UcenterMember.Regdate),
+		Id:           strconv.Itoa(memberEx.UcenterMember.Uid),
+		Type:         "normal-user",
+		Password:     memberEx.UcenterMember.Password,
+		PasswordSalt: memberEx.UcenterMember.Salt,
+		//DisplayName:       displayName,
+		Avatar:          "",
+		PermanentAvatar: "*",
+		Email:           memberEx.UcenterMember.Email,
+		//Phone:             memberEx.Profile.Mobile,
+		//Location:          memberEx.Profile.Residecity,
+		Address: []string{},
+		//Affiliation:       memberEx.Profile.Occupation,
+		//Title:             memberEx.Profile.Position,
+		//IdCardType:        idCardType,
+		//IdCard:            idCard,
+		//Homepage:          memberEx.Profile.Site,
+		//Bio:               memberEx.Profile.Bio,
+		//Tag:               memberEx.Profile.Interest,
+		Region:   "CN",
+		Language: "zh",
+		//Gender:            gender,
+		//Birthday:          birthday,
+		//Education:         memberEx.Profile.Education,
+		// Score:             memberEx.Member.Credits,
+		// Ranking:           memberEx.Member.Uid,
+		IsOnline:          false,
+		IsAdmin:           false,
+		IsGlobalAdmin:     false,
+		IsForbidden:       false,
+		IsDeleted:         false,
+		SignupApplication: CasdoorApplication,
+		CreatedIp:         memberEx.UcenterMember.Regip,
+		LastSigninTime:    getTimeFromUnixSeconds(memberEx.UcenterMember.Lastlogintime),
+		LastSigninIp:      "",
+		Properties:        map[string]string{},
+	}
+
+	if memberEx.Member == nil {
+		fmt.Printf("[%d, %s] memberEx.Member == nil\n", memberEx.UcenterMember.Uid, memberEx.UcenterMember.Username)
+	} else {
+		user.Score = memberEx.Member.Credits
+		user.Ranking = memberEx.Member.Uid
+	}
+
+	if memberEx.Profile == nil {
+		fmt.Printf("[%d, %s] memberEx.Profile == nil\n", memberEx.UcenterMember.Uid, memberEx.UcenterMember.Username)
+	} else {
+		displayName := memberEx.Profile.Realname
+		if displayName == "" {
+			displayName = memberEx.Member.Username
+		}
+
+		idCardType := ""
+		idCard := ""
+		if memberEx.Profile.Idcard != "" {
+			idCardType = "IdCard"
+			idCard = memberEx.Profile.Idcard
+		}
+
+		gender := "Male"
+		if memberEx.Profile.Gender == 2 {
+			gender = "Female"
+		}
+
+		birthday := ""
+		if memberEx.Profile.Birthyear != 0 && memberEx.Profile.Birthmonth != 0 && memberEx.Profile.Birthday != 0 {
+			birthday = fmt.Sprintf("%02d-%02d-%02d", memberEx.Profile.Birthyear, memberEx.Profile.Birthmonth, memberEx.Profile.Birthday)
+		}
+
+		address := []string{}
+		if memberEx.Profile.Resideprovince != "" {
+			address = append(address, memberEx.Profile.Resideprovince)
+			if memberEx.Profile.Residecity != "" {
+				address = append(address, memberEx.Profile.Residecity)
+				if memberEx.Profile.Residedist != "" {
+					address = append(address, memberEx.Profile.Residedist)
+					if memberEx.Profile.Residecommunity != "" {
+						address = append(address, memberEx.Profile.Residecommunity)
+					}
+				}
+			}
+		}
+		user.Address = address
+
+		user.DisplayName = displayName
+		user.IdCardType = idCardType
+		user.IdCard = idCard
+		user.Gender = gender
+		user.Birthday = birthday
+
+		user.Phone = memberEx.Profile.Mobile
+		user.Location = memberEx.Profile.Residecity
+		user.Affiliation = memberEx.Profile.Occupation
+		user.Title = memberEx.Profile.Position
+		user.Homepage = memberEx.Profile.Site
+		user.Bio = memberEx.Profile.Bio
+		user.Tag = memberEx.Profile.Interest
+		user.Education = memberEx.Profile.Education
+	}
+
+	return user
+}
